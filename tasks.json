@@ -1,16 +1,16 @@
 [
   {
     "id": 1,
-    "description": "Nova meta",
-    "status": "todo",
-    "createAt": "2024-10-22T00:25:39.579Z",
-    "updateAt": "2024-10-22T00:25:39.579Z"
+    "description": "Crie uma nova tarefa",
+    "status": "done",
+    "createAt": "2024-10-23T00:59:12.683Z",
+    "updateAt": "2024-10-23T23:34:15.611Z"
   },
   {
     "id": 2,
-    "description": "Pescar",
+    "description": "nova tarefa",
     "status": "todo",
-    "createAt": "2024-10-22T00:51:10.397Z",
-    "updateAt": "2024-10-22T00:51:10.397Z"
+    "createAt": "2024-10-23T00:59:35.885Z",
+    "updateAt": "2024-10-23T23:34:30.869Z"
   }
 ]
