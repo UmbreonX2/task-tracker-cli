@@ -27,7 +27,7 @@ function addTask(description) {
   console.log(`Task added successfully (ID: ${newTask.id})`)
 }
 
-function taskList() {
+function taskList(status) {
   const tasks = JSON.parse(fs.readFileSync(filePath))
 
   if (tasks.length == 0) {
@@ -35,7 +35,17 @@ function taskList() {
     return 
   }
 
-  tasks.forEach(task => {
+  if (!['done', 'progress', 'todo', '', undefined].includes(status)) {
+    console.log('Status inválido');
+    return;
+  }
+
+  const filteredTasks = tasks.filter(task => {
+    if(status === '') return true;
+    return task.status == status;
+  })
+
+  filteredTasks.forEach(task => {
     console.log(`Descrição: ${task.description}`)
   });
 }
@@ -152,7 +162,7 @@ switch (command) {
     addTask(args.join(' '))
     break;
   case 'list':
-    taskList();
+    taskList(args.join(' '));
     break;
   case 'delete':
     deleteTask();
