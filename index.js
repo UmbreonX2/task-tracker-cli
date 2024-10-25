@@ -1,30 +1,44 @@
 #!/usr/bin/env node
 const fs = require('fs');
 const path = require('path');
+const { select, input, checkbox } = require('@inquirer/prompts');
 
 const filePath = path.join(__dirname, 'tasks.json')
 
-if(!fs.existsSync(filePath)) {
-  fs.writeFileSync(filePath, JSON.stringify([]))
+// const [,, command, ...args] = process.argv
+
+let tasks = [];
+
+function loadTask() {
+  if(!fs.existsSync(filePath)) {
+    fs.writeFileSync(filePath, JSON.stringify([]))
+  }
+  tasks = JSON.parse(fs.readFileSync(filePath));
 }
 
-const [,, command, ...args] = process.argv
+function saveTask() {
+  fs.writeFileSync(filePath, JSON.stringify(tasks, null, 2));
+}
 
-function addTask(description) {
-  const tasks = JSON.parse(fs.readFileSync(filePath));
+async function addTask() {
+  const description = await input({
+    message: 'Enter task description:'
+  });
 
-  const newTask = {
+  if(tasks.length == 0) {
+    mensagem = 'A meta não pode ser vazia.'
+    return
+  }
+
+  tasks.push ({
     id: tasks.length + 1,
     description: description,
     status: 'todo',
     createAt: new Date(),
     updateAt: new Date()
-  };
+  });
 
-  tasks.push(newTask)
-
-  fs.writeFileSync(filePath, JSON.stringify(tasks, null, 2));
-  console.log(`Task added successfully (ID: ${newTask.id})`)
+  console.log(`Task added successfully (ID: ${tasks.id})`)
 }
 
 function taskList(status) {
@@ -157,29 +171,77 @@ function taskDone() {
   console.log(taskExists)
 }
 
-switch (command) {
-  case 'add':
-    addTask(args.join(' '))
-    break;
-  case 'list':
-    taskList(args.join(' '));
-    break;
-  case 'delete':
-    deleteTask();
-    break;
-  case 'update':
-    updateTask(args.slice(1).join(' '))
-    break;
-  case 'mark-in-progress':
-    taskProgress()
-    break;
-  case 'mark-done':
-    taskDone()
-  break
-  case 'help':
-    needHelp()
-    break;
-  default:
-    console.log('Unknown command. Type **task-cli help** to get help.');
-    break;
+const start = async () => {
+  await loadTask()
+
+  while(true) {
+
+    const command = await select({
+      message: "Choose a command > ",
+      choices: [
+        {
+          name: 'Add Task',
+          value: 'add'
+        },
+        {
+          name: 'List Task',
+          value: 'list'
+        },
+        {
+          name: 'Delete Task',
+          value: 'delete'
+        },
+        {
+          name: 'Update Task',
+          value: 'update'
+        },
+        {
+          name: 'Mark Task as Done',
+          value: 'mark-done'
+        },
+        {
+          name: 'Mark Task as In Progress',
+          value: 'mark-in-progress'
+        },
+        {
+          name: 'Help',
+          value: 'help'
+        },
+        {
+          name: 'Exit',
+          value: 'exit'
+        }]
+    })
+    
+    switch (command) {
+      case 'add':
+        await addTask()
+        await saveTask()
+        break;
+      case 'list':
+        taskList(args.join(' '));
+        break;
+      case 'delete':
+        deleteTask();
+        break;
+      case 'update':
+        updateTask(args.slice(1).join(' '))
+        break;
+      case 'mark-in-progress':
+        taskProgress()
+        break;
+      case 'mark-done':
+        taskDone()
+      break
+      case 'help':
+        needHelp()
+        break;
+      case 'exit':
+        console.log('See you later');
+        return
+    }
+  }
 }
+
+start()
+

@@ -12,5 +12,12 @@
     "status": "todo",
     "createAt": "2024-10-23T00:59:35.885Z",
     "updateAt": "2024-10-23T23:34:30.869Z"
+  },
+  {
+    "id": 3,
+    "description": "Nova tarefa com inquirer",
+    "status": "todo",
+    "createAt": "2024-10-25T00:44:46.081Z",
+    "updateAt": "2024-10-25T00:44:46.081Z"
   }
 ]
