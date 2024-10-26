@@ -38,24 +38,38 @@ async function addTask() {
     updateAt: new Date()
   });
 
-  console.log(`Task added successfully (ID: ${tasks.id})`)
+  console.log(`Task added successfully (ID: ${tasks.length})`)
 }
 
-function taskList(status) {
-  const tasks = JSON.parse(fs.readFileSync(filePath))
-
+async function taskList() {
   if (tasks.length == 0) {
     console.log('There are no tasks registered')
     return 
   }
-
-  if (!['done', 'progress', 'todo', '', undefined].includes(status)) {
-    console.log('Status inválido');
-    return;
-  }
+  
+  const status = await select({
+    message: 'Choose the task you want to list:',
+    choices:[
+      {
+        name: 'All list',
+        value: 'all'
+      },
+      {
+        name: 'List only the tasks to do',
+        value: 'todo'
+      },
+      {
+        name: 'List only the tasks in progress',
+        value: 'progress'
+      },
+      {
+        name: 'List only the tasks to done',
+        value: 'done'
+      }]
+  })
 
   const filteredTasks = tasks.filter(task => {
-    if(status === '') return true;
+    if(status === 'all') return true;
     return task.status == status;
   })
 
@@ -64,26 +78,45 @@ function taskList(status) {
   });
 }
 
-function deleteTask() {
-  const tasks = JSON.parse(fs.readFileSync(filePath))
-
-  const deleteTask = Number(process.argv[3])
-
-  let taskFound = false;
-
-  tasks.forEach(task => {
-    if(deleteTask === task.id){
-      taskFound = true;
-    }
-  })
-
-  if(!taskFound) {
-    console.log('Não existe essa tarefa')
+async function deleteTask() {
+  if (tasks.length == 0) {
+    console.log('There are no tasks registered')
+    return 
   }
 
-  const newTasks = tasks.filter(newArrayTasks => newArrayTasks.id != deleteTask) 
+  const tasksMarked = tasks
+  .filter(task => task.status !== 'done')
+  .map((task) => {
+    return{ 
+      description: task.description, 
+      checked: false, 
+      id: task.id}
+  })
+
+  console.log(tasksMarked)
+
+  const tasksDelete = await checkbox({
+    message: 'Choose the tasks to delete',
+    choices: tasksMarked.map(task => ({ 
+      value: task.id,           
+      name: task.description,           
+      checked: task.checked         
+    })),
+    instructions: false
+  })
+
+  if(tasksDelete.length == 0){ 
+    console.log('No tasks to delete')
+    return
+  }
   
-  fs.writeFileSync(filePath, JSON.stringify(newTasks, null, 2))
+  tasksDelete.forEach(taskDelete =>
+    tasks = tasks.filter(task => {
+      return task.id != taskDelete
+    })
+  )
+
+  console.log("Task(s) deleted successfully")
 }
 
 function updateTask(description) {
@@ -175,9 +208,43 @@ const start = async () => {
   await loadTask()
 
   while(true) {
+    saveTask()
 
     const command = await select({
-      message: "Choose a command > ",
+      message: "Choose a command:",
+      choices: [
+        {
+          name: 'Manage Task',
+          value: 'manage-tasks'
+        },
+        {
+          name: 'Help',
+          value: 'help'
+        },
+        {
+          name: 'Exit',
+          value: 'exit'
+        }]
+    })
+    
+    switch (command) {
+      case 'manage-tasks':
+        await manageTaskMenu()
+      break
+      case 'help':
+        await needHelp()
+        break;
+      case 'exit':
+        console.log('See you later');
+        return
+      default:
+        console.log('Unknowm command.');
+    }
+  }
+  
+  async function manageTaskMenu() {
+    const command = await select({
+      message: "Task Management:",
       choices: [
         {
           name: 'Add Task',
@@ -204,40 +271,31 @@ const start = async () => {
           value: 'mark-in-progress'
         },
         {
-          name: 'Help',
-          value: 'help'
-        },
-        {
-          name: 'Exit',
-          value: 'exit'
+          name: 'Back To Main Menu',
+          value: 'back'
         }]
     })
     
     switch (command) {
       case 'add':
         await addTask()
-        await saveTask()
         break;
       case 'list':
-        taskList(args.join(' '));
+        await taskList();
         break;
       case 'delete':
-        deleteTask();
+        await deleteTask();
         break;
       case 'update':
-        updateTask(args.slice(1).join(' '))
+        await updateTask()
         break;
       case 'mark-in-progress':
-        taskProgress()
+        await taskProgress()
         break;
       case 'mark-done':
-        taskDone()
+        await taskDone()
       break
-      case 'help':
-        needHelp()
-        break;
-      case 'exit':
-        console.log('See you later');
+      case 'back':
         return
     }
   }
